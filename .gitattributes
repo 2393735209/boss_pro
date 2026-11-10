@@ -1,0 +1,9 @@
+# 批处理文件必须保持 CRLF，否则 Windows 上双击会解析失败
+*.bat text eol=crlf
+
+# 其余文本统一 LF
+*.js   text eol=lf
+*.json text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.md   text eol=lf

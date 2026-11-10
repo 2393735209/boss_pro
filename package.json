@@ -1,0 +1,44 @@
+{
+  "name": "boss-auto",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BOSS 智能投递助手",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder --win portable",
+    "build:dir": "electron-builder --win --dir"
+  },
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.workbuddy.bossauto",
+    "productName": "BossAuto",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "webview-preload.js",
+      "ui/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "BOSS智能投递-${version}.exe"
+    },
+    "compression": "maximum",
+    "asar": true
+  }
+}

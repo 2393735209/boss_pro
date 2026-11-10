@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>BOSS 干跑检查器</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- ============ 左侧控制面板 ============ -->
+    <aside class="panel">
+
+      <header class="panel-head">
+        <div class="brand">
+          <span class="brand-mark">Dry</span>
+          <span class="brand-name">智能投递</span>
+        </div>
+        <div class="conn" id="conn">
+          <i class="dot"></i><span id="connText">等待页面</span>
+        </div>
+      </header>
+
+      <!-- 页面状态提示条 -->
+      <div class="notice" id="notice" hidden>
+        <span class="notice-icon" id="noticeIcon">!</span>
+        <span id="noticeText"></span>
+      </div>
+
+      <!-- 操作区 -->
+      <div class="actions">
+        <button id="scanBtn" class="btn btn-primary">
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+            <path fill="currentColor" d="M8 3a5 5 0 1 0 4.9 6h-1.53A3.5 3.5 0 1 1 8 4.5V7l3-3-3-3v2Z"/>
+          </svg>
+          重新扫描
+          <kbd>R</kbd>
+        </button>
+        <label class="switch" title="页面加载完自动扫描一次">
+          <input type="checkbox" id="autoScan" />
+          <span class="switch-track"><i></i></span>
+          <span class="switch-label">自动</span>
+        </label>
+      </div>
+
+      <!-- 统计 -->
+      <section class="stats" id="stats" hidden>
+        <div class="stat">
+          <b id="statTotal">0</b><span>本页岗位</span>
+        </div>
+        <div class="stat stat-ok">
+          <b id="statOk">0</b><span>可投</span>
+        </div>
+        <div class="stat stat-skip">
+          <b id="statSkip">0</b><span>跳过</span>
+        </div>
+      </section>
+
+      <!-- 接口数据捕获状态 -->
+      <div class="cache-row" id="cacheRow" hidden>
+        <span class="cache-dot"></span>
+        <span id="cacheText"></span>
+      </div>
+
+      <!-- 投递控制 -->
+      <section class="deliver-box">
+        <div class="db-head">
+          <span class="db-label">本次投递数量</span>
+          <div class="stepper">
+            <button class="step" id="minusCount" type="button">−</button>
+            <input type="number" id="batchCount" value="100" min="1" max="200" />
+            <button class="step" id="plusCount" type="button">+</button>
+          </div>
+        </div>
+        <input type="range" id="batchRange" min="1" max="200" value="100" class="range" />
+        <div class="db-hint-row">
+          <span class="db-hint" id="dbHint">先扫描一次，这里会显示待投数量</span>
+          <span class="db-today" id="dbToday">今日 0</span>
+        </div>
+        <button class="btn-start" id="startBtn" type="button">
+          <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+            <path fill="currentColor" d="M4.5 3.2v9.6c0 .6.66.96 1.16.64l7.2-4.8a.75.75 0 0 0 0-1.28l-7.2-4.8A.76.76 0 0 0 4.5 3.2Z"/>
+          </svg>
+          <span id="startBtnText">开始投递</span>
+        </button>
+      </section>
+
+      <!-- 筛选设置（可折叠，配一次就够了，默认收起把空间让给结果） -->
+      <details class="section" id="filterBox">
+        <summary>
+          <span class="summary-text">筛选规则</span>
+          <span class="summary-meta" id="filterMeta">未设置</span>
+        </summary>
+        <div class="section-body">
+          <div class="field">
+            <label for="minSalary">薪资下限</label>
+            <div class="input-wrap">
+              <input type="number" id="minSalary" min="0" step="1" placeholder="0" />
+              <span class="suffix">K / 月</span>
+            </div>
+            <p class="hint">填 0 表示不按薪资筛。日薪、年薪会自动换算。</p>
+          </div>
+
+          <div class="field">
+            <label for="excludeWords">排除词</label>
+            <input type="text" id="excludeWords" placeholder="外包, 众包, 派遣, 驻场" />
+            <p class="hint">逗号分隔。匹配职位名、公司名、标签，命中即跳过。</p>
+          </div>
+
+          <div class="field">
+            <label for="excludeCompanies">排除公司</label>
+            <input type="text" id="excludeCompanies" placeholder="某某科技, 某某信息" />
+          </div>
+        </div>
+      </details>
+
+      <!-- 结果列表 -->
+      <section class="results">
+        <div class="empty" id="empty">
+          <div class="empty-art">
+            <svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">
+              <rect x="8" y="14" width="48" height="36" rx="4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-dasharray="5 4"/>
+              <circle cx="28" cy="30" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/>
+              <path d="M33.5 35.5 41 43" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="empty-title">还没有扫描结果</p>
+          <p class="empty-desc">在右侧登录 BOSS，进到职位搜索结果页，然后点「重新扫描」。</p>
+        </div>
+        <div id="list"></div>
+      </section>
+
+      <!-- 选择器诊断 -->
+      <footer class="diag">
+        <details id="diagBox">
+          <summary>
+            <span>选择器诊断</span>
+            <span class="diag-badge" id="diagBadge" hidden>有失效</span>
+          </summary>
+          <div class="diag-body">
+            <p class="hint">命中 0 的选择器说明 BOSS 改版了，需要更新 scanner.js 里的规则。</p>
+            <button class="btn diag-export" id="exportBtn">导出页面结构（发给我排查用）</button>
+            <div id="diagList"></div>
+          </div>
+        </details>
+      </footer>
+
+    </aside>
+
+    <!-- ============ 右侧浏览器 ============ -->
+    <main class="stage">
+      <div class="toolbar">
+        <button class="icon-btn" id="backBtn" title="后退">
+          <svg viewBox="0 0 16 16" width="15" height="15"><path fill="currentColor" d="M7.5 3.5 3 8l4.5 4.5 1.06-1.06L5.62 8.5H13v-1.5H5.62l2.94-2.94L7.5 3.5Z"/></svg>
+        </button>
+        <button class="icon-btn" id="reloadBtn" title="刷新">
+          <svg viewBox="0 0 16 16" width="15" height="15"><path fill="currentColor" d="M8 3a5 5 0 1 0 4.9 6h-1.53A3.5 3.5 0 1 1 8 4.5V7l3-3-3-3v2Z"/></svg>
+        </button>
+        <div class="url-bar" id="urlBar" title="">about:blank</div>
+        <button class="btn btn-ghost" id="gotoListBtn">职位列表</button>
+      </div>
+      <div class="host" id="host"></div>
+
+      <!-- 投递进度球 -->
+      <div class="float-ball" id="floatBall" hidden title="点击停止投递">
+        <svg viewBox="0 0 44 44" width="44" height="44" aria-hidden="true">
+          <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,.13)" stroke-width="3"/>
+          <circle id="ballRing" cx="22" cy="22" r="18" fill="none" stroke="#22c55e" stroke-width="3"
+                  stroke-linecap="round" stroke-dasharray="113.1" stroke-dashoffset="113.1"
+                  transform="rotate(-90 22 22)"/>
+        </svg>
+        <span class="ball-text" id="ballText">0/0</span>
+      </div>
+    </main>
+
+    <!-- ============ 底部运行日志 ============ -->
+    <footer class="log-panel" id="logPanel">
+      <div class="log-head">
+        <span class="log-title">运行日志</span>
+        <span class="log-badge" id="logBadge" hidden>0</span>
+        <div class="log-tools">
+          <button id="logClear" type="button">清空</button>
+          <button id="logToggle" type="button">展开</button>
+        </div>
+      </div>
+      <div class="log-body" id="logBody"></div>
+    </footer>
+
+  </div>
+
+  <script src="scanner.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
